@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
             display: flex;
         }
 
+        /* Sidebar styles */
         #sidebar {
             width: 200px;
             background-color: #333;
@@ -36,17 +38,29 @@
             background-color: #575757;
         }
 
+        /* Main content container */
         #content {
             margin-left: 220px;
             padding: 20px;
             flex-grow: 1;
         }
 
+        /* Style for the desmond player */
         desmond-player {
             width: 100%;
             height: 100%;
         }
 
+        /* File input positioning */
+        input[type="file"] {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            left: 50%;
+            top: 95%;
+            color: white;
+        }
+
+        /* Controls button styles */
         #controlsButton {
             color: white;
             background-color: #444;
@@ -61,6 +75,7 @@
             background-color: #575757;
         }
 
+        /* Popup modal styles */
         #controlsPopup {
             display: none;
             position: fixed;
@@ -76,6 +91,7 @@
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
         }
 
+        /* Close button style (X button) */
         #controlsPopup .closeBtn {
             color: black;
             background-color: transparent;
@@ -91,25 +107,29 @@
             color: red;
         }
 
+        /* Controls content styling */
         #controlsPopup .popupContent {
             margin-bottom: 20px;
         }
     </style>
     <script src="jszip.min.js"></script>
 </head>
+
 <body>
     <div id="sidebar">
         <div id="controlsButton" onclick="toggleControlsPopup()">Controls</div>
-        <a href="#" onclick="loadGame('game1')">Game 1</a>
-        <a href="#" onclick="loadGame('game2')">Game 2</a>
-        <a href="#" onclick="loadGame('game3')">Game 3</a>
-        <a href="#" onclick="loadGame('game4')">Game 4</a>
+        <a href="#" onclick="loadGame('Game1/')">Taiko No Tatsujin</a>
+        <a href="#" onclick="loadGame('Game2/')">Game 2</a>
+        <a href="#" onclick="loadGame('Game3/')">Game 3</a>
+        <a href="#" onclick="loadGame('Game4/')">Game 4</a>
     </div>
 
     <div id="content">
         <desmond-player></desmond-player>
+        <input type="file" id="fileInput" accept=".zip, .tar, .tar.gz, .7z"></input>
     </div>
 
+    <!-- Controls Popup Modal -->
     <div id="controlsPopup">
         <button class="closeBtn" onclick="closeControlsPopup()">X</button>
         <div class="popupContent">
@@ -126,54 +146,46 @@
 
     <script src="desmond.min.js"></script>
     <script>
-        function combineFilesAndLoadGame(gameFolder) {
-            const part1Url = `${gameFolder}/part_aa`;
-            const part2Url = `${gameFolder}/part_ab`;
+        // Function to combine parts and load the NDS file
+        function combinePartsAndLoad(parts) {
+            const combinedBuffer = new Uint8Array(parts.reduce((total, part) => total + part.byteLength, 0));
+            let offset = 0;
+            parts.forEach(part => {
+                combinedBuffer.set(new Uint8Array(part), offset);
+                offset += part.byteLength;
+            });
+            const combinedBlob = new Blob([combinedBuffer], { type: 'application/octet-stream' });
+            const combinedURL = URL.createObjectURL(combinedBlob);
 
-            Promise.all([fetch(part1Url), fetch(part2Url)])
-                .then(responses => Promise.all(responses.map(response => response.arrayBuffer())))
-                .then(arrayBuffers => {
-                    // Combine the two ArrayBuffers into one
-                    const combinedBuffer = new ArrayBuffer(arrayBuffers[0].byteLength + arrayBuffers[1].byteLength);
-                    const combinedView = new Uint8Array(combinedBuffer);
-                    combinedView.set(new Uint8Array(arrayBuffers[0]), 0);
-                    combinedView.set(new Uint8Array(arrayBuffers[1]), arrayBuffers[0].byteLength);
-
-                    // Create a Blob with a ZIP type
-                    const combinedBlob = new Blob([combinedBuffer], { type: 'application/zip' });
-
-                    // Use a temporary URL to pass the Blob to JSZip
-                    const zipUrl = URL.createObjectURL(combinedBlob);
-
-                    // Load the ZIP with JSZip
-                    JSZip.loadAsync(combinedBlob).then(zip => {
-                        let ndsFileFound = false;
-
-                        zip.forEach((filename, zipEntry) => {
-                            if (zipEntry.name.endsWith('.nds')) {
-                                zipEntry.async('blob').then(blob => {
-                                    const ndsFileURL = URL.createObjectURL(blob);
-                                    document.querySelector("desmond-player").loadURL(ndsFileURL);
-                                });
-                                ndsFileFound = true;
-                            }
-                        });
-
-                        if (!ndsFileFound) {
-                            alert("No NDS file found in the archive.");
-                        }
-                    }).catch(error => {
-                        console.error("Error loading ZIP file:", error);
-                        alert("Error loading ZIP file.");
-                    });
-                }).catch(error => {
-                    console.error("Error fetching game parts:", error);
-                    alert("Error fetching game parts.");
-                });
+            // Load into the desmond player
+            document.querySelector("desmond-player").loadURL(combinedURL);
         }
 
-        function loadGame(gameFolder) {
-            combineFilesAndLoadGame(gameFolder);
+        // Load a game folder (i.e., the parts of an NDS file in a folder)
+        function loadGame(gameName) {
+            // Assuming the parts are named part_aa, part_ab, etc.
+            const partNames = ['part_aa', 'part_ab']; // Add more parts as needed
+
+            // Simulate fetching the parts from a remote source (like GitHub or local server)
+            const parts = [];
+
+            // Fetch all the parts
+            partNames.forEach(partName => {
+                fetch(`./games/${gameName}/${partName}`) // Assuming game folder structure
+                    .then(response => response.blob())
+                    .then(blob => {
+                        parts.push(blob);
+
+                        // If we've fetched all parts, combine and load the game
+                        if (parts.length === partNames.length) {
+                            combinePartsAndLoad(parts);
+                        }
+                    })
+                    .catch(err => {
+                        console.error(`Error loading part ${partName}:`, err);
+                        alert(`Failed to load ${partName}`);
+                    });
+            });
         }
 
         window.onload = function () {
@@ -184,6 +196,7 @@
             }, 1000);
         };
 
+        // Controls Popup functions
         function toggleControlsPopup() {
             const popup = document.getElementById('controlsPopup');
             popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
@@ -195,4 +208,5 @@
         }
     </script>
 </body>
+
 </html>
