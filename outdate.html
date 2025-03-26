@@ -50,15 +50,6 @@
             height: 100%;
         }
 
-        /* File input positioning */
-        input[type="file"] {
-            position: absolute;
-            transform: translate(-50%, -50%);
-            left: 50%;
-            top: 95%;
-            color: white;
-        }
-
         /* Controls button styles */
         #controlsButton {
             color: white;
@@ -114,10 +105,9 @@
     <script src="jszip.min.js"></script>
 </head>
 <body>
-
     <div id="sidebar">
         <div id="controlsButton" onclick="toggleControlsPopup()">Controls</div>
-        <a href="#" onclick="loadGame('game1')">Gatttttttme 1</a>
+        <a href="#" onclick="loadGame('game1')">Taiko No Tatsujin</a>
         <a href="#" onclick="loadGame('game2')">Game 2</a>
         <a href="#" onclick="loadGame('game3')">Game 3</a>
         <a href="#" onclick="loadGame('game4')">Game 4</a>
@@ -125,7 +115,6 @@
 
     <div id="content">
         <desmond-player></desmond-player>
-        <input type="file" id="fileInput" accept=".zip, .tar, .tar.gz, .7z"></input>
     </div>
 
     <!-- Controls Popup Modal -->
@@ -145,66 +134,58 @@
 
     <script src="desmond.min.js"></script>
     <script>
-        // Helper function to combine the two parts of the split ZIP file
-        function combineZipParts(part1, part2, callback) {
-            const reader1 = new FileReader();
-            const reader2 = new FileReader();
+        // Combine two parts into a single ZIP file and load the NDS from the combined ZIP
+        function combineFilesAndLoadGame(gameFolder) {
+            const part1Url = `${gameFolder}/part_aa`;
+            const part2Url = `${gameFolder}/part_ab`;
 
-            reader1.onload = function(event1) {
-                reader2.onload = function(event2) {
-                    const buffer1 = event1.target.result;
-                    const buffer2 = event2.target.result;
-                    const combinedBuffer = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
-                    combinedBuffer.set(new Uint8Array(buffer1), 0);
-                    combinedBuffer.set(new Uint8Array(buffer2), buffer1.byteLength);
+            // Fetch both parts
+            Promise.all([fetch(part1Url), fetch(part2Url)])
+                .then(responses => Promise.all(responses.map(response => response.blob())))
+                .then(blobs => {
+                    // Combine the two blobs into one
+                    const combinedBlob = new Blob([blobs[0], blobs[1]], { type: 'application/zip' });
 
-                    const combinedBlob = new Blob([combinedBuffer], { type: 'application/zip' });
-                    callback(combinedBlob);
-                };
-                reader2.readAsArrayBuffer(part2);
-            };
-            reader1.readAsArrayBuffer(part1);
-        }
-
-        // Function to handle the ZIP file loading from the sidebar
-        function loadGame(gameFolder) {
-            const part1FileName = `${gameFolder}/part_aa`;
-            const part2FileName = `${gameFolder}/part_ab`;
-
-            // Fetch the two parts (part_aa and part_ab) from the folder on the GitHub repository
-            Promise.all([
-                fetch(part1FileName).then(res => res.blob()),
-                fetch(part2FileName).then(res => res.blob())
-            ])
-            .then(([part1, part2]) => {
-                // Combine the two parts
-                combineZipParts(part1, part2, function(combinedBlob) {
-                    // Use JSZip to read the combined ZIP file
-                    JSZip.loadAsync(combinedBlob).then(function(zip) {
+                    // Load the ZIP file into JSZip
+                    JSZip.loadAsync(combinedBlob).then(zip => {
                         let ndsFileFound = false;
-                        zip.forEach(function(relativePath, zipEntry) {
-                            // If an NDS file is found, load it into the desmond-player
+                        
+                        // Loop through the files in the ZIP
+                        zip.forEach((filename, zipEntry) => {
                             if (zipEntry.name.endsWith('.nds')) {
-                                zipEntry.async('blob').then(function(blob) {
+                                zipEntry.async('blob').then(blob => {
                                     const ndsFileURL = URL.createObjectURL(blob);
                                     document.querySelector("desmond-player").loadURL(ndsFileURL);
-                                    ndsFileFound = true;
                                 });
+                                ndsFileFound = true;
                             }
                         });
 
                         if (!ndsFileFound) {
-                            alert("No NDS file found in the ZIP archive.");
+                            alert("No NDS file found in the archive.");
                         }
-                    }).catch(function(error) {
-                        console.error("Error reading combined ZIP file:", error);
+                    }).catch(error => {
+                        console.error("Error loading ZIP file:", error);
+                        alert("Error loading ZIP file.");
                     });
+                }).catch(error => {
+                    console.error("Error fetching game parts:", error);
+                    alert("Error fetching game parts.");
                 });
-            }).catch(function(error) {
-                console.error("Error fetching game parts:", error);
-                alert("Failed to load game.");
-            });
         }
+
+        // Load the game from the sidebar by combining the parts and playing the NDS
+        function loadGame(gameFolder) {
+            combineFilesAndLoadGame(gameFolder);
+        }
+
+        window.onload = function () {
+            setTimeout(function () {
+                document.querySelector("desmond-player").loadURL("../firmware.nds");
+                document.querySelector("desmond-player").shadowRoot.querySelector("#top").style = "position: fixed;transform: translate(-50%, -50%);width: 40%;left: 50%;top: 30%;height: 40%;";
+                document.querySelector("desmond-player").shadowRoot.querySelector("#bottom").style = "position: fixed;transform: translate(-50%, -50%);width: 40%;left: 50%;top: 70%;height: 40%;";
+            }, 1000);
+        };
 
         // Controls Popup functions
         function toggleControlsPopup() {
@@ -216,14 +197,6 @@
             const popup = document.getElementById('controlsPopup');
             popup.style.display = 'none';
         }
-
-        window.onload = function () {
-            setTimeout(function () {
-                document.querySelector("desmond-player").loadURL("../firmware.nds");
-                document.querySelector("desmond-player").shadowRoot.querySelector("#top").style = "position: fixed;transform: translate(-50%, -50%);width: 40%;left: 50%;top: 30%;height: 40%;";
-                document.querySelector("desmond-player").shadowRoot.querySelector("#bottom").style = "position: fixed;transform: translate(-50%, -50%);width: 40%;left: 50%;top: 70%;height: 40%;";
-            }, 1000);
-        };
     </script>
 </body>
 </html>
