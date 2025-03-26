@@ -3,6 +3,7 @@
 
 <head>
     <title>Desmond - Firmware Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body {
             background: black;
@@ -57,91 +58,20 @@
             top: 95%;
             color: white;
         }
-
-        /* Controls button styles */
-        #controlsButton {
-            color: white;
-            background-color: #444;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        #controlsButton:hover {
-            background-color: #575757;
-        }
-
-        /* Popup modal styles */
-        #controlsPopup {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            color: black;
-            width: 400px;
-            z-index: 1000;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Close button style (X button) */
-        #controlsPopup .closeBtn {
-            color: black;
-            background-color: transparent;
-            border: none;
-            font-size: 20px;
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            cursor: pointer;
-        }
-
-        #controlsPopup .closeBtn:hover {
-            color: red;
-        }
-
-        /* Controls content styling */
-        #controlsPopup .popupContent {
-            margin-bottom: 20px;
-        }
     </style>
 </head>
 
 <body>
     <div id="sidebar">
-        <div id="controlsButton" onclick="toggleControlsPopup()">Controls</div>
-        <a href="#" onclick="loadGame('https://files.catbox.moe/yymz2f.nds')">Taiko No Tatsujin</a>
-        <a href="#" onclick="loadGame('https://files.catbox.moe/gz81vb.nds')">Plants Vs. Zombies</a>
-        <a href="#" onclick="loadGame('https://files.catbox.moe/oilvja.nds')">Animal Crossing: Wild World</a>
-        <a href="#" onclick="loadGame('https://files.catbox.moe/j0v344.nds')">Grand Theft Auto: Chinatown Wars</a>
-        <a href="#" onclick="loadGame('https://files.catbox.moe/f2k8c8.nds')">Mario Kart DS</a>
-        <a href="#" onclick="loadGame('firmware.nds')">Test App</a>
-        <br><h3>More games are coming soon</h3>
+        <a href="#" onclick="loadGame('game1.nds')">Game 1</a>
+        <a href="#" onclick="loadGame('game2.nds')">Game 2</a>
+        <a href="#" onclick="loadGame('game3.nds')">Game 3</a>
+        <a href="#" onclick="loadGame('game4.nds')">Game 4</a>
     </div>
 
     <div id="content">
         <desmond-player></desmond-player>
-        <input type="file"></input>
-    </div>
-
-    <!-- Controls Popup Modal -->
-    <div id="controlsPopup">
-        <button class="closeBtn" onclick="closeControlsPopup()">X</button>
-        <div class="popupContent">
-            <h3>Controls:</h3>
-            <ul>
-                <li>Arrow Keys: Move</li>
-                <li>Z: Action Button</li>
-                <li>X: Cancel</li>
-                <li>A/B: Select Items</li>
-                <li>Start: Pause</li>
-            </ul>
-        </div>
+        <input type="file" id="fileInput" accept=".nds,.zip">
     </div>
 
     <script src="desmond.min.js"></script>
@@ -151,29 +81,59 @@
             player.loadURL(fileName);
         }
 
-        document.querySelector("input").onchange = function () {
-            document.querySelector("desmond-player").loadURL(URL.createObjectURL(document.querySelector("input").files[0]));
+        document.getElementById("fileInput").onchange = function (event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.name.endsWith(".nds")) {
+                loadNDSFile(URL.createObjectURL(file));
+            } else if (file.name.endsWith(".zip")) {
+                extractAndLoadNDS(file);
+            } else {
+                alert("Unsupported file format. Please select a .nds or .zip file.");
+            }
         };
+
+        function loadNDSFile(url) {
+            document.querySelector("desmond-player").loadURL(url);
+        }
+
+        function extractAndLoadNDS(zipFile) {
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                JSZip.loadAsync(event.target.result).then(function (zip) {
+                    let ndsFileFound = false;
+
+                    // Search for .nds file inside the zip
+                    zip.forEach((relativePath, file) => {
+                        if (relativePath.endsWith(".nds") && !ndsFileFound) {
+                            ndsFileFound = true;
+
+                            // Extract and load the NDS file
+                            file.async("blob").then(blob => {
+                                const ndsURL = URL.createObjectURL(blob);
+                                loadNDSFile(ndsURL);
+                            });
+                        }
+                    });
+
+                    if (!ndsFileFound) {
+                        alert("No .nds file found inside the ZIP.");
+                    }
+                }).catch(error => {
+                    alert("Error extracting ZIP: " + error);
+                });
+            };
+
+            reader.readAsArrayBuffer(zipFile);
+        }
 
         window.onload = function () {
             setTimeout(function () {
                 document.querySelector("desmond-player").loadURL("../firmware.nds");
-                document.querySelector("desmond-player").shadowRoot.querySelector("#top").style = "position: fixed;transform: translate(-50%, -50%);width: 40%;left: 50%;top: 30%;height: 40%;";
-                document.querySelector("desmond-player").shadowRoot.querySelector("#bottom").style = "position: fixed;transform: translate(-50%, -50%);width: 40%;left: 50%;top: 70%;height: 40%;";
             }, 1000);
-        }
-
-        // Toggle Controls Popup visibility
-        function toggleControlsPopup() {
-            const popup = document.getElementById('controlsPopup');
-            popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
-        }
-
-        // Close Controls Popup
-        function closeControlsPopup() {
-            const popup = document.getElementById('controlsPopup');
-            popup.style.display = 'none';
-        }
+        };
     </script>
 </body>
+
 </html>
