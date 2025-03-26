@@ -3,32 +3,32 @@
 
 <head>
     <title>Desmond - Firmware Demo</title>
-    <script src="7zz.umd.js"></script>
+    <script src="lzma-min.js"></script>
     <style>
         body {
             background: black;
             display: flex;
         }
 
-        /* Sidebar */
+        /* Sidebar styles */
         #sidebar {
             width: 200px;
             background-color: #333;
             padding: 10px;
             color: white;
             height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
             position: fixed;
             top: 0;
             left: 0;
-            display: flex;
-            flex-direction: column;
         }
 
         #sidebar a {
             color: white;
             padding: 10px;
             text-decoration: none;
-            display: block;
             margin: 5px 0;
             border-radius: 5px;
         }
@@ -37,14 +37,20 @@
             background-color: #575757;
         }
 
-        /* Main content */
+        /* Main content container */
         #content {
             margin-left: 220px;
             padding: 20px;
             flex-grow: 1;
         }
 
-        /* File input */
+        /* Style for the desmond player */
+        desmond-player {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* File input positioning */
         input[type="file"] {
             position: absolute;
             transform: translate(-50%, -50%);
@@ -53,7 +59,22 @@
             color: white;
         }
 
-        /* Controls popup */
+        /* Controls button styles */
+        #controlsButton {
+            color: white;
+            background-color: #444;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        #controlsButton:hover {
+            background-color: #575757;
+        }
+
+        /* Popup modal styles */
         #controlsPopup {
             display: none;
             position: fixed;
@@ -63,11 +84,13 @@
             background-color: white;
             padding: 20px;
             border-radius: 10px;
+            color: black;
             width: 400px;
             z-index: 1000;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
         }
 
+        /* Close button style (X button) */
         #controlsPopup .closeBtn {
             color: black;
             background-color: transparent;
@@ -82,13 +105,18 @@
         #controlsPopup .closeBtn:hover {
             color: red;
         }
+
+        /* Controls content styling */
+        #controlsPopup .popupContent {
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 
 <body>
     <div id="sidebar">
         <div id="controlsButton" onclick="toggleControlsPopup()">Controls</div>
-        <a href="#" onclick="loadGame('Plants vs. Zombies (USA).7z')">PVZ</a>
+        <a href="#" onclick="loadGame('game1.nds')">Game 1</a>
         <a href="#" onclick="loadGame('game2.nds')">Game 2</a>
         <a href="#" onclick="loadGame('game3.nds')">Game 3</a>
         <a href="#" onclick="loadGame('game4.nds')">Game 4</a>
@@ -96,10 +124,10 @@
 
     <div id="content">
         <desmond-player></desmond-player>
-        <input type="file" accept=".nds,.zip,.7z,.rar"></input>
+        <input type="file" accept=".nds,.7z"></input>
     </div>
 
-    <!-- Controls Popup -->
+    <!-- Controls Popup Modal -->
     <div id="controlsPopup">
         <button class="closeBtn" onclick="closeControlsPopup()">X</button>
         <div class="popupContent">
@@ -116,36 +144,34 @@
 
     <script src="desmond.min.js"></script>
     <script>
-        document.querySelector("input").onchange = async function () {
+        document.querySelector("input").onchange = function () {
             let file = this.files[0];
 
             if (!file) return;
 
             if (file.name.endsWith(".nds")) {
-                // Load directly if it's an .nds file
+                // Directly load NDS file
                 document.querySelector("desmond-player").loadURL(URL.createObjectURL(file));
-            } else if (file.name.endsWith(".zip") || file.name.endsWith(".7z") || file.name.endsWith(".rar")) {
-                // Handle compressed files using 7z-WASM
+            } else if (file.name.endsWith(".7z")) {
+                // Handle 7z extraction
                 let reader = new FileReader();
-                reader.onload = async function (event) {
-                    try {
-                        let archive = await SevenZip.extract(event.target.result);
-                        let ndsFileName = Object.keys(archive).find(name => name.endsWith(".nds"));
+                reader.onload = function (event) {
+                    let compressedData = new Uint8Array(event.target.result);
 
-                        if (ndsFileName) {
-                            let blob = new Blob([archive[ndsFileName]], { type: "application/octet-stream" });
-                            document.querySelector("desmond-player").loadURL(URL.createObjectURL(blob));
-                        } else {
-                            alert("No .nds file found in the archive!");
+                    LZMA.decompress(compressedData, function (decompressedData, error) {
+                        if (error) {
+                            console.error("7z extraction error:", error);
+                            alert("Error extracting 7z file.");
+                            return;
                         }
-                    } catch (err) {
-                        console.error("Decompression error:", err);
-                        alert("Error extracting archive file.");
-                    }
+
+                        let blob = new Blob([decompressedData], { type: "application/octet-stream" });
+                        document.querySelector("desmond-player").loadURL(URL.createObjectURL(blob));
+                    });
                 };
                 reader.readAsArrayBuffer(file);
             } else {
-                alert("Unsupported file type. Please upload a .nds, .zip, .7z, or .rar file.");
+                alert("Unsupported file type. Please upload a .nds or .7z file.");
             }
         };
 
@@ -157,13 +183,16 @@
             }, 1000);
         };
 
+        // Toggle Controls Popup visibility
         function toggleControlsPopup() {
             const popup = document.getElementById('controlsPopup');
             popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
         }
 
+        // Close Controls Popup
         function closeControlsPopup() {
-            document.getElementById('controlsPopup').style.display = 'none';
+            const popup = document.getElementById('controlsPopup');
+            popup.style.display = 'none';
         }
     </script>
 </body>
