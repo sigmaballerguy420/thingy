@@ -1,0 +1,230 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>New Tab</title>
+    <style>
+        body {
+            background: black;
+            display: flex;
+        }
+
+        /* Sidebar styles */
+        #sidebar {
+            width: 200px;
+            background-color: #333;
+            padding: 10px;
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        #sidebar a {
+            color: white;
+            padding: 10px;
+            text-decoration: none;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+
+        #sidebar a:hover {
+            background-color: #575757;
+        }
+
+        /* Main content container */
+        #content {
+            margin-left: 220px;
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        /* Style for the desmond player */
+        desmond-player {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* File input positioning */
+        input[type="file"] {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            left: 50%;
+            top: 95%;
+            color: white;
+        }
+
+        /* Controls button styles */
+        #controlsButton {
+            color: white;
+            background-color: #444;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        #controlsButton:hover {
+            background-color: #575757;
+        }
+
+        /* Popup modal styles */
+        #controlsPopup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            color: black;
+            width: 400px;
+            z-index: 1000;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Close button style (X button) */
+        #controlsPopup .closeBtn {
+            color: black;
+            background-color: transparent;
+            border: none;
+            font-size: 20px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+        }
+
+        #controlsPopup .closeBtn:hover {
+            color: red;
+        }
+
+        /* Controls content styling */
+        #controlsPopup .popupContent {
+            margin-bottom: 20px;
+        }
+    </style>
+    <script src="jszip.min.js"></script>
+</head>
+
+<body>
+    <div id="sidebar">
+        <div id="controlsButton" onclick="toggleControlsPopup()">Controls</div>
+        <a href="#" onclick="loadGame('fortnite.zip')">Plants Vs. Zombies</a>
+        <a href="#" onclick="loadGame('cookingmama.zip')">Cooking Mama</a>
+        <a href="#" onclick="loadGame('kirby.zip')">Kirby Mass Attack</a>
+        <a href="#" onclick="loadGame('mk.zip')">Mario Kart DS</a>
+        <a href="#" onclick="loadGame('sm.zip')">Super Mario 64 DS</a>
+        <a href="#" onclick="loadGame('hktg.zip')">Hell's Kitchen: The Game</a>
+        <p>Early Beta v1.1</p>
+    </div>
+
+    <div id="content">
+        <desmond-player></desmond-player>
+        <input type="file" id="fileInput" accept=".zip, .tar, .tar.gz, .7z"></input>
+    </div>
+
+    <!-- Controls Popup Modal -->
+    <div id="controlsPopup">
+        <button class="closeBtn" onclick="closeControlsPopup()">X</button>
+        <div class="popupContent">
+            <h3>Controls:</h3>
+            <ul>
+                <li>Arrow Keys: Move</li>
+                <li>Z: Action Button</li>
+                <li>X: Cancel</li>
+                <li>A/B: Select Items</li>
+                <li>Start: Pause</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="desmond.min.js"></script>
+    <script>
+        // Load the NDS game from the archive
+        function handleArchiveFile(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const data = event.target.result;
+                JSZip.loadAsync(data).then(function(zip) {
+                    let ndsFileFound = false;
+                    // Loop through the files in the archive
+                    zip.forEach(function(relativePath, zipEntry) {
+                        // Check if the file is an NDS file
+                        if (zipEntry.name.endsWith('.nds')) {
+                            zipEntry.async('blob').then(function(blob) {
+                                const ndsFileURL = URL.createObjectURL(blob);
+                                callback(ndsFileURL);
+                                ndsFileFound = true;
+                            });
+                        }
+                    });
+                    if (!ndsFileFound) {
+                    
+                    }
+                }).catch(function(error) {
+                    console.error("Error reading ZIP file:", error);
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Handle file selection for the input field
+        document.getElementById("fileInput").addEventListener("change", function(event) {
+            const file = event.target.files[0];
+            if (file && file.name.endsWith(".zip")) {
+                handleArchiveFile(file, function(ndsFileURL) {
+                    document.querySelector("desmond-player").loadURL(ndsFileURL);
+                });
+            } else {
+                alert("Please select a valid ZIP archive.");
+            }
+        });
+
+        // Load a game from the sidebar
+        function loadGame(fileName) {
+            const fileExtension = fileName.split('.').pop().toLowerCase();
+            if (fileExtension === "zip") {
+                // If the game is a ZIP file, handle it similarly to the file input
+                fetch(fileName)
+                    .then(response => response.blob())
+                    .then(blob => handleArchiveFile(blob, function(ndsFileURL) {
+                        document.querySelector("desmond-player").loadURL(ndsFileURL);
+                    }))
+                    .catch(err => {
+                        console.error("Error loading game from sidebar:", err);
+                        alert("Failed to load game.");
+                    });
+            } else {
+                // If it's not a ZIP file, assume it's a direct NDS file
+                document.querySelector("desmond-player").loadURL(fileName);
+            }
+        }
+
+        window.onload = function () {
+            setTimeout(function () {
+                document.querySelector("desmond-player").loadURL("../firmware.nds");
+                document.querySelector("desmond-player").shadowRoot.querySelector("#top").style = "position: fixed;transform: translate(-50%, -50%);width: 40%;left: 50%;top: 30%;height: 40%;";
+                document.querySelector("desmond-player").shadowRoot.querySelector("#bottom").style = "position: fixed;transform: translate(-50%, -50%);width: 40%;left: 50%;top: 70%;height: 40%;";
+            }, 1000);
+        };
+
+        // Controls Popup functions
+        function toggleControlsPopup() {
+            const popup = document.getElementById('controlsPopup');
+            popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function closeControlsPopup() {
+            const popup = document.getElementById('controlsPopup');
+            popup.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
