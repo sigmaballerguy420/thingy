@@ -116,10 +116,10 @@
 <body>
     <div id="sidebar">
         <div id="controlsButton" onclick="toggleControlsPopup()">Controls</div>
-        <a href="#" onclick="loadGame('fortnite.zip')">Plants Vs. Zombies</a>
-        <a href="#" onclick="loadGame('game2.nds')">Game 2</a>
-        <a href="#" onclick="loadGame('game3.nds')">Gaehjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjme 3</a>
-        <a href="#" onclick="loadGame('game4.nds')">Game 4</a>
+        <a href="#" onclick="loadGame('fortnite.zip')">Game 1</a>
+        <a href="#" onclick="loadGame('game2.zip')">Game 2</a>
+        <a href="#" onclick="loadGame('game3.zip')">Game 3</a>
+        <a href="#" onclick="loadGame('game4.zip')">Game 4</a>
     </div>
 
     <div id="content">
@@ -145,21 +145,26 @@
     <script src="desmond.min.js"></script>
     <script>
         // Load the NDS game from the archive
-        function handleArchiveFile(file) {
+        function handleArchiveFile(file, callback) {
             const reader = new FileReader();
             reader.onload = function(event) {
                 const data = event.target.result;
                 JSZip.loadAsync(data).then(function(zip) {
+                    let ndsFileFound = false;
                     // Loop through the files in the archive
                     zip.forEach(function(relativePath, zipEntry) {
                         // Check if the file is an NDS file
                         if (zipEntry.name.endsWith('.nds')) {
                             zipEntry.async('blob').then(function(blob) {
                                 const ndsFileURL = URL.createObjectURL(blob);
-                                document.querySelector("desmond-player").loadURL(ndsFileURL);
+                                callback(ndsFileURL);
+                                ndsFileFound = true;
                             });
                         }
                     });
+                    if (!ndsFileFound) {
+                        alert("No NDS file found in the archive.");
+                    }
                 }).catch(function(error) {
                     console.error("Error reading ZIP file:", error);
                 });
@@ -167,11 +172,13 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // Handling file selection
+        // Handle file selection for the input field
         document.getElementById("fileInput").addEventListener("change", function(event) {
             const file = event.target.files[0];
             if (file && file.name.endsWith(".zip")) {
-                handleArchiveFile(file);
+                handleArchiveFile(file, function(ndsFileURL) {
+                    document.querySelector("desmond-player").loadURL(ndsFileURL);
+                });
             } else {
                 alert("Please select a valid ZIP archive.");
             }
@@ -179,8 +186,22 @@
 
         // Load a game from the sidebar
         function loadGame(fileName) {
-            const player = document.querySelector("desmond-player");
-            player.loadURL(fileName);
+            const fileExtension = fileName.split('.').pop().toLowerCase();
+            if (fileExtension === "zip") {
+                // If the game is a ZIP file, handle it similarly to the file input
+                fetch(fileName)
+                    .then(response => response.blob())
+                    .then(blob => handleArchiveFile(blob, function(ndsFileURL) {
+                        document.querySelector("desmond-player").loadURL(ndsFileURL);
+                    }))
+                    .catch(err => {
+                        console.error("Error loading game from sidebar:", err);
+                        alert("Failed to load game.");
+                    });
+            } else {
+                // If it's not a ZIP file, assume it's a direct NDS file
+                document.querySelector("desmond-player").loadURL(fileName);
+            }
         }
 
         window.onload = function () {
