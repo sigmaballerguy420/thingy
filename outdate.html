@@ -221,6 +221,14 @@
             popup.style.display = 'none';
         }
 
+        // Function to download the combined zip file with the correct name
+        function downloadCombinedZip(combinedBlob) {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(combinedBlob);
+            link.download = 'combined.zip'; // The file is saved as "combined.zip"
+            link.click();
+        }
+
         window.onload = function () {
             setTimeout(function () {
                 document.querySelector("desmond-player").loadURL("../firmware.nds");
