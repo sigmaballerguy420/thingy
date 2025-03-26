@@ -117,10 +117,10 @@
 
     <div id="sidebar">
         <div id="controlsButton" onclick="toggleControlsPopup()">Controls</div>
-        <a href="#" onclick="loadGame('game1/part_aa')">Game 1</a>
-        <a href="#" onclick="loadGame('game2/part_aa')">Game 2</a>
-        <a href="#" onclick="loadGame('game3/part_aa')">Game 3</a>
-        <a href="#" onclick="loadGame('game4/part_aa')">Game 4</a>
+        <a href="#" onclick="loadGame('game1')">Game 1</a>
+        <a href="#" onclick="loadGame('game2')">Game 2</a>
+        <a href="#" onclick="loadGame('game3')">Game 3</a>
+        <a href="#" onclick="loadGame('game4')">Game 4</a>
     </div>
 
     <div id="content">
@@ -147,7 +147,6 @@
     <script>
         // Helper function to combine the two parts of the split ZIP file
         function combineZipParts(part1, part2, callback) {
-            // Create FileReader to read the first part
             const reader1 = new FileReader();
             const reader2 = new FileReader();
 
@@ -159,23 +158,20 @@
                     combinedBuffer.set(new Uint8Array(buffer1), 0);
                     combinedBuffer.set(new Uint8Array(buffer2), buffer1.byteLength);
 
-                    // Create a combined Blob for the ZIP file
                     const combinedBlob = new Blob([combinedBuffer], { type: 'application/zip' });
                     callback(combinedBlob);
                 };
-                // Read the second file
                 reader2.readAsArrayBuffer(part2);
             };
-            // Read the first part
             reader1.readAsArrayBuffer(part1);
         }
 
         // Function to handle the ZIP file loading from the sidebar
-        function loadGame(gamePrefix) {
-            const part1FileName = `${gamePrefix}.part_aa`;
-            const part2FileName = `${gamePrefix}.part_ab`;
+        function loadGame(gameFolder) {
+            const part1FileName = `${gameFolder}/part_aa`;
+            const part2FileName = `${gameFolder}/part_ab`;
 
-            // Fetch the first part (part_aa) and the second part (part_ab) from the GitHub repo or server
+            // Fetch the two parts (part_aa and part_ab) from the folder on the GitHub repository
             Promise.all([
                 fetch(part1FileName).then(res => res.blob()),
                 fetch(part2FileName).then(res => res.blob())
@@ -219,14 +215,6 @@
         function closeControlsPopup() {
             const popup = document.getElementById('controlsPopup');
             popup.style.display = 'none';
-        }
-
-        // Function to download the combined zip file with the correct name
-        function downloadCombinedZip(combinedBlob) {
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(combinedBlob);
-            link.download = 'combined.zip'; // The file is saved as "combined.zip"
-            link.click();
         }
 
         window.onload = function () {
