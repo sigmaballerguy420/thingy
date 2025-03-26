@@ -10,7 +10,6 @@
             display: flex;
         }
 
-        /* Sidebar styles */
         #sidebar {
             width: 200px;
             background-color: #333;
@@ -19,7 +18,6 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
             position: fixed;
             top: 0;
             left: 0;
@@ -31,26 +29,24 @@
             text-decoration: none;
             margin: 5px 0;
             border-radius: 5px;
+            display: block;
         }
 
         #sidebar a:hover {
             background-color: #575757;
         }
 
-        /* Main content container */
         #content {
             margin-left: 220px;
             padding: 20px;
             flex-grow: 1;
         }
 
-        /* Style for the desmond player */
         desmond-player {
             width: 100%;
             height: 100%;
         }
 
-        /* File input positioning */
         input[type="file"] {
             position: absolute;
             transform: translate(-50%, -50%);
@@ -58,81 +54,116 @@
             top: 95%;
             color: white;
         }
+
+        /* Controls Popup */
+        #controlsPopup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            color: black;
+            width: 400px;
+            z-index: 1000;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #controlsPopup .closeBtn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
 <body>
     <div id="sidebar">
-        <a href="#" onclick="loadGame('game1.nds')">Game 1</a>
+        <div id="controlsButton" onclick="toggleControlsPopup()">Controls</div>
+        <a href="#" onclick="loadGame('game1.nds')">Gamwe 1</a>
         <a href="#" onclick="loadGame('game2.nds')">Game 2</a>
         <a href="#" onclick="loadGame('game3.nds')">Game 3</a>
-        <a href="#" onclick="loadGame('game4.nds')">Game 4</a>
     </div>
 
     <div id="content">
         <desmond-player></desmond-player>
-        <input type="file" id="fileInput" accept=".nds,.zip">
+        <input type="file" accept=".nds,.zip">
+    </div>
+
+    <!-- Controls Popup -->
+    <div id="controlsPopup">
+        <button class="closeBtn" onclick="closeControlsPopup()">X</button>
+        <h3>Controls:</h3>
+        <ul>
+            <li>Arrow Keys: Move</li>
+            <li>Z: Action Button</li>
+            <li>X: Cancel</li>
+            <li>A/B: Select Items</li>
+            <li>Start: Pause</li>
+        </ul>
     </div>
 
     <script src="desmond.min.js"></script>
     <script>
-        function loadGame(fileName) {
-            const player = document.querySelector("desmond-player");
-            player.loadURL(fileName);
-        }
-
-        document.getElementById("fileInput").onchange = function (event) {
+        document.querySelector("input").onchange = function (event) {
             const file = event.target.files[0];
+
             if (!file) return;
 
             if (file.name.endsWith(".nds")) {
-                loadNDSFile(URL.createObjectURL(file));
+                loadNDSFile(file);
             } else if (file.name.endsWith(".zip")) {
                 extractAndLoadNDS(file);
             } else {
-                alert("Unsupported file format. Please select a .nds or .zip file.");
+                alert("Unsupported file type. Please upload a .nds or .zip file.");
             }
         };
 
-        function loadNDSFile(url) {
-            document.querySelector("desmond-player").loadURL(url);
+        function loadNDSFile(file) {
+            const player = document.querySelector("desmond-player");
+            player.loadURL(URL.createObjectURL(file));
         }
 
-        function extractAndLoadNDS(zipFile) {
+        async function extractAndLoadNDS(zipFile) {
             const reader = new FileReader();
-            reader.onload = function (event) {
-                JSZip.loadAsync(event.target.result).then(function (zip) {
-                    let ndsFileFound = false;
 
-                    // Search for .nds file inside the zip
-                    zip.forEach((relativePath, file) => {
-                        if (relativePath.endsWith(".nds") && !ndsFileFound) {
-                            ndsFileFound = true;
+            reader.onload = async function (event) {
+                const zipData = event.target.result;
+                const zip = await JSZip.loadAsync(zipData);
 
-                            // Extract and load the NDS file
-                            file.async("blob").then(blob => {
-                                const ndsURL = URL.createObjectURL(blob);
-                                loadNDSFile(ndsURL);
-                            });
-                        }
-                    });
-
-                    if (!ndsFileFound) {
-                        alert("No .nds file found inside the ZIP.");
+                for (const filename of Object.keys(zip.files)) {
+                    if (filename.endsWith(".nds")) {
+                        const fileData = await zip.files[filename].async("blob");
+                        loadNDSFile(fileData);
+                        return;
                     }
-                }).catch(error => {
-                    alert("Error extracting ZIP: " + error);
-                });
+                }
+
+                alert("No .nds file found inside the ZIP.");
             };
 
             reader.readAsArrayBuffer(zipFile);
         }
 
-        window.onload = function () {
-            setTimeout(function () {
-                document.querySelector("desmond-player").loadURL("../firmware.nds");
-            }, 1000);
-        };
+        function loadGame(fileName) {
+            const player = document.querySelector("desmond-player");
+            player.loadURL(fileName);
+        }
+
+        function toggleControlsPopup() {
+            const popup = document.getElementById('controlsPopup');
+            popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function closeControlsPopup() {
+            document.getElementById('controlsPopup').style.display = 'none';
+        }
     </script>
 </body>
 
