@@ -3,7 +3,7 @@
 
 <head>
     <title>Desmond - Firmware Demo</title>
-    <script src="lzma-min.js"></script>
+    <script src="pako.min.js"></script>
     <style>
         body {
             background: black;
@@ -116,15 +116,15 @@
 <body>
     <div id="sidebar">
         <div id="controlsButton" onclick="toggleControlsPopup()">Controls</div>
-        <a href="#" onclick="loadGame('game1.nds')">Game efesfs1</a>
-        <a href="#" onclick="loadGame('game2.nds')">Game 2</a>
+        <a href="#" onclick="loadGame('game1.nds')">Game 1</a>
+        <a href="#" onclick="loadGame('game2.nds')">Gamertrtrt 2</a>
         <a href="#" onclick="loadGame('game3.nds')">Game 3</a>
         <a href="#" onclick="loadGame('game4.nds')">Game 4</a>
     </div>
 
     <div id="content">
         <desmond-player></desmond-player>
-        <input type="file" accept=".nds,.7z"></input>
+        <input type="file" accept=".nds,.gzip"></input>
     </div>
 
     <!-- Controls Popup Modal -->
@@ -152,28 +152,22 @@
             if (file.name.endsWith(".nds")) {
                 // Directly load NDS file
                 document.querySelector("desmond-player").loadURL(URL.createObjectURL(file));
-            } else if (file.name.endsWith(".7z")) {
-                // Handle 7z extraction
+            } else if (file.name.endsWith(".gzip")) {
+                // Handle GZIP decompression using pako.js
                 let reader = new FileReader();
                 reader.onload = function (event) {
-                    let compressedData = new Uint8Array(event.target.result);
-
-                    // Make sure the LZMA decompression function is properly handled
-                    LZMA.decompress(compressedData, 0, function (result, error) {
-                        if (error) {
-                            console.error("7z extraction error:", error);
-                            alert("Error extracting 7z file.");
-                            return;
-                        }
-
-                        // Create a Blob with the decompressed data and load the NDS file
-                        let blob = new Blob([result], { type: "application/octet-stream" });
+                    try {
+                        let decompressed = pako.inflate(event.target.result);
+                        let blob = new Blob([decompressed], { type: 'application/octet-stream' });
                         document.querySelector("desmond-player").loadURL(URL.createObjectURL(blob));
-                    });
+                    } catch (err) {
+                        console.error("GZIP decompression error:", err);
+                        alert("Error decompressing GZIP file.");
+                    }
                 };
                 reader.readAsArrayBuffer(file);
             } else {
-                alert("Unsupported file type. Please upload a .nds or .7z file.");
+                alert("Unsupported file type. Please upload a .nds or .gzip file.");
             }
         };
 
@@ -198,5 +192,4 @@
         }
     </script>
 </body>
-
 </html>
