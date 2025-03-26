@@ -118,10 +118,10 @@
 <body>
     <div id="sidebar">
         <div id="controlsButton" onclick="toggleControlsPopup()">Controls</div>
-        <a href="#" onclick="loadGame('game1/')">Taiko No Tatsujin</a>
-        <a href="#" onclick="loadGame('game2/')">Game 2</a>
-        <a href="#" onclick="loadGame('game3/')">Game 3</a>
-        <a href="#" onclick="loadGame('game4/')">Game 4</a>
+        <a href="#" onclick="loadGame('Game1')">Gamewwww 1</a>
+        <a href="#" onclick="loadGame('Game2')">Game 2</a>
+        <a href="#" onclick="loadGame('Game3')">Game 3</a>
+        <a href="#" onclick="loadGame('Game4')">Game 4</a>
     </div>
 
     <div id="content">
@@ -154,10 +154,14 @@
                 combinedBuffer.set(new Uint8Array(part), offset);
                 offset += part.byteLength;
             });
+
+            // Create a Blob for the combined NDS file and name it "combined.nds"
             const combinedBlob = new Blob([combinedBuffer], { type: 'application/octet-stream' });
+
+            // Create a temporary file URL for the combined file
             const combinedURL = URL.createObjectURL(combinedBlob);
 
-            // Load into the desmond player
+            // Load into the desmond player with the appropriate NDS file type
             document.querySelector("desmond-player").loadURL(combinedURL);
         }
 
