@@ -107,7 +107,7 @@
 <body>
     <div id="sidebar">
         <div id="controlsButton" onclick="toggleControlsPopup()">Controls</div>
-        <a href="#" onclick="loadGame('game1')">Taiko No Tatsujin</a>
+        <a href="#" onclick="loadGame('game1')">Taiko</a>
         <a href="#" onclick="loadGame('game2')">Game 2</a>
         <a href="#" onclick="loadGame('game3')">Game 3</a>
         <a href="#" onclick="loadGame('game4')">Game 4</a>
@@ -146,10 +146,14 @@
                     // Combine the two blobs into one
                     const combinedBlob = new Blob([blobs[0], blobs[1]], { type: 'application/zip' });
 
+                    // Create a temporary anchor element for downloading the combined ZIP
+                    const tempZipFile = new Blob([combinedBlob], { type: 'application/zip' });
+                    const tempZipFileURL = URL.createObjectURL(tempZipFile);
+
                     // Load the ZIP file into JSZip
-                    JSZip.loadAsync(combinedBlob).then(zip => {
+                    JSZip.loadAsync(tempZipFile).then(zip => {
                         let ndsFileFound = false;
-                        
+
                         // Loop through the files in the ZIP
                         zip.forEach((filename, zipEntry) => {
                             if (zipEntry.name.endsWith('.nds')) {
