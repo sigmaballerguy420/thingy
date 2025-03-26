@@ -1,230 +1,154 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
-    <title>Desmond - Firmware Demo</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SigmaBaller - NDS Emulator</title>
     <style>
+        /* General Page Styling */
         body {
-            background: black;
-            display: flex;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
         }
 
-        /* Sidebar styles */
-        #sidebar {
-            width: 200px;
-            background-color: #333;
-            padding: 10px;
+        /* Header Styling */
+        header {
+            background-color: #222;
             color: white;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            position: fixed;
-            top: 0;
-            left: 0;
-        }
-
-        #sidebar a {
-            color: white;
-            padding: 10px;
-            text-decoration: none;
-            margin: 5px 0;
-            border-radius: 5px;
-        }
-
-        #sidebar a:hover {
-            background-color: #575757;
-        }
-
-        /* Main content container */
-        #content {
-            margin-left: 220px;
             padding: 20px;
-            flex-grow: 1;
-        }
-
-        /* Style for the desmond player */
-        desmond-player {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* File input positioning */
-        input[type="file"] {
-            position: absolute;
-            transform: translate(-50%, -50%);
-            left: 50%;
-            top: 95%;
-            color: white;
-        }
-
-        /* Controls button styles */
-        #controlsButton {
-            color: white;
-            background-color: #444;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-bottom: 10px;
             text-align: center;
         }
 
-        #controlsButton:hover {
-            background-color: #575757;
-        }
-
-        /* Popup modal styles */
-        #controlsPopup {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            color: black;
-            width: 400px;
-            z-index: 1000;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Close button style (X button) */
-        #controlsPopup .closeBtn {
-            color: black;
-            background-color: transparent;
-            border: none;
+        header a {
+            color: white;
+            text-decoration: none;
             font-size: 20px;
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            cursor: pointer;
+            margin-left: 20px;
+            padding: 5px;
         }
 
-        #controlsPopup .closeBtn:hover {
-            color: red;
+        header a:hover {
+            background-color: #444;
+            border-radius: 5px;
         }
 
-        /* Controls content styling */
-        #controlsPopup .popupContent {
+        /* Navigation Bar */
+        nav {
+            display: flex;
+            justify-content: center;
+            background-color: #444;
+            padding: 10px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            font-size: 18px;
+        }
+
+        nav a:hover {
+            background-color: #575757;
+            border-radius: 5px;
+        }
+
+        /* Main Content Area */
+        main {
+            padding: 20px;
+        }
+
+        .news-post {
+            background-color: white;
             margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .news-post h3 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .news-post p {
+            font-size: 16px;
+            color: #555;
+        }
+
+        /* Footer Styling */
+        footer {
+            background-color: #222;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
         }
     </style>
-    <script src="jszip.min.js"></script>
 </head>
 
 <body>
-    <div id="sidebar">
-        <div id="controlsButton" onclick="toggleControlsPopup()">Controls</div>
-        <a href="#" onclick="loadGame('fortnite.zip')">Plants Vs. Zombies</a>
-        <a href="#" onclick="loadGame('cookingmama.zip')">Cooking Mama</a>
-        <a href="#" onclick="loadGame('kirby.zip')">Kirby Mass Attack</a>
-        <a href="#" onclick="loadGame('mk.zip')">Mario Kart DS</a>
-        <a href="#" onclick="loadGame('sm.zip')">Super Mario 64 DS</a>
-        <a href="#" onclick="loadGame('hktg.zip')">Hell's Kitchen: The Game</a>
-        <p>Early Beta v1.1</p>
-    </div>
 
-    <div id="content">
-        <desmond-player></desmond-player>
-        <input type="file" id="fileInput" accept=".zip, .tar, .tar.gz, .7z"></input>
-    </div>
+    <!-- Header Section -->
+    <header>
+        <h1>SigmaBaller - NDS Emulator</h1>
+        <a href="main.html">Go to Emulator</a>
+    </header>
 
-    <!-- Controls Popup Modal -->
-    <div id="controlsPopup">
-        <button class="closeBtn" onclick="closeControlsPopup()">X</button>
-        <div class="popupContent">
-            <h3>Controls:</h3>
+    <!-- Navigation Bar -->
+    <nav>
+        <a href="#news">News</a>
+        <a href="#features">Features</a>
+        <a href="#about">About</a>
+    </nav>
+
+    <!-- Main Content Section -->
+    <main>
+        <section id="news">
+            <h2>Latest News</h2>
+
+            <!-- News Post Example -->
+            <div class="news-post">
+                <h3>Early Beta v1.1</h3>
+                <p>I am proud and excited to release v1.1 of SigmaBaller. I am making great improvements on this website daily. Expect more features soon from SigmaBaller.</p>
+            </div>
+
+            <!-- Another News Post Example -->
+            <div class="news-post">
+                <h3>The Dawn Of SigmaBaller</h3>
+                <p>I am proud to say SigmaBaller is in Early Beta. Please tell me if you want any games to be added. This is still a very young project.</p>
+            </div>
+
+            <!-- Add more news posts as needed -->
+        </section>
+
+        <section id="features">
+            <h2>Features</h2>
+            <p>Explore the powerful features of SigmaBaller:</p>
             <ul>
-                <li>Arrow Keys: Move</li>
-                <li>Z: Action Button</li>
-                <li>X: Cancel</li>
-                <li>A/B: Select Items</li>
-                <li>Start: Pause</li>
+                <li>Full NDS ROM support</li>
+                <li>Intuitive controls</li>
+                <li>Seamless game loading</li>
             </ul>
-        </div>
-    </div>
+        </section>
 
-    <script src="desmond.min.js"></script>
-    <script>
-        // Load the NDS game from the archive
-        function handleArchiveFile(file, callback) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const data = event.target.result;
-                JSZip.loadAsync(data).then(function(zip) {
-                    let ndsFileFound = false;
-                    // Loop through the files in the archive
-                    zip.forEach(function(relativePath, zipEntry) {
-                        // Check if the file is an NDS file
-                        if (zipEntry.name.endsWith('.nds')) {
-                            zipEntry.async('blob').then(function(blob) {
-                                const ndsFileURL = URL.createObjectURL(blob);
-                                callback(ndsFileURL);
-                                ndsFileFound = true;
-                            });
-                        }
-                    });
-                    if (!ndsFileFound) {
-                    
-                    }
-                }).catch(function(error) {
-                    console.error("Error reading ZIP file:", error);
-                });
-            };
-            reader.readAsArrayBuffer(file);
-        }
+        <section id="about">
+            <h2>About SigmaBaller</h2>
+            <p>SigmaBaller is an easy-to-use Nintendo DS game site. SigmaBaller is designed so that it can be used anywhere, to play games. Many times a day, you might find yourself at a lack of what to do. SigmaBaller has an answer to your boredom!</p>
+        </section>
+	<center>By using SigmaBaller, you agree not to use it as a distraction to other people, or to yourself. SigmaBaller does not condone ANY action you do of which may affect your attention, or behaviour.</center>
+    </main>
 
-        // Handle file selection for the input field
-        document.getElementById("fileInput").addEventListener("change", function(event) {
-            const file = event.target.files[0];
-            if (file && file.name.endsWith(".zip")) {
-                handleArchiveFile(file, function(ndsFileURL) {
-                    document.querySelector("desmond-player").loadURL(ndsFileURL);
-                });
-            } else {
-                alert("Please select a valid ZIP archive.");
-            }
-        });
+    <!-- Footer Section -->
+    <footer>
+        <p>Peak gaming, no cap.</p>
+    </footer>
 
-        // Load a game from the sidebar
-        function loadGame(fileName) {
-            const fileExtension = fileName.split('.').pop().toLowerCase();
-            if (fileExtension === "zip") {
-                // If the game is a ZIP file, handle it similarly to the file input
-                fetch(fileName)
-                    .then(response => response.blob())
-                    .then(blob => handleArchiveFile(blob, function(ndsFileURL) {
-                        document.querySelector("desmond-player").loadURL(ndsFileURL);
-                    }))
-                    .catch(err => {
-                        console.error("Error loading game from sidebar:", err);
-                        alert("Failed to load game.");
-                    });
-            } else {
-                // If it's not a ZIP file, assume it's a direct NDS file
-                document.querySelector("desmond-player").loadURL(fileName);
-            }
-        }
-
-        window.onload = function () {
-            setTimeout(function () {
-                document.querySelector("desmond-player").loadURL("../firmware.nds");
-                document.querySelector("desmond-player").shadowRoot.querySelector("#top").style = "position: fixed;transform: translate(-50%, -50%);width: 40%;left: 50%;top: 30%;height: 40%;";
-                document.querySelector("desmond-player").shadowRoot.querySelector("#bottom").style = "position: fixed;transform: translate(-50%, -50%);width: 40%;left: 50%;top: 70%;height: 40%;";
-            }, 1000);
-        };
-
-        // Controls Popup functions
-        function toggleControlsPopup() {
-            const popup = document.getElementById('controlsPopup');
-            popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
-        }
-
-        function closeControlsPopup() {
-            const popup = document.getElementById('controlsPopup');
-            popup.style.display = 'none';
-        }
-    </script>
 </body>
+
 </html>
