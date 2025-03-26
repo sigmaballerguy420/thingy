@@ -116,9 +116,9 @@
 <body>
     <div id="sidebar">
         <div id="controlsButton" onclick="toggleControlsPopup()">Controls</div>
-        <a href="#" onclick="loadGame('game1.nds')">Game 1</a>
+        <a href="#" onclick="loadGame('game1.nds')">Game efesfs1</a>
         <a href="#" onclick="loadGame('game2.nds')">Game 2</a>
-        <a href="#" onclick="loadGame('game3.nds')">Gamwdwae 3</a>
+        <a href="#" onclick="loadGame('game3.nds')">Game 3</a>
         <a href="#" onclick="loadGame('game4.nds')">Game 4</a>
     </div>
 
@@ -158,14 +158,16 @@
                 reader.onload = function (event) {
                     let compressedData = new Uint8Array(event.target.result);
 
-                    LZMA.decompress(compressedData, function (decompressedData, error) {
+                    // Make sure the LZMA decompression function is properly handled
+                    LZMA.decompress(compressedData, 0, function (result, error) {
                         if (error) {
                             console.error("7z extraction error:", error);
                             alert("Error extracting 7z file.");
                             return;
                         }
 
-                        let blob = new Blob([decompressedData], { type: "application/octet-stream" });
+                        // Create a Blob with the decompressed data and load the NDS file
+                        let blob = new Blob([result], { type: "application/octet-stream" });
                         document.querySelector("desmond-player").loadURL(URL.createObjectURL(blob));
                     });
                 };
@@ -196,4 +198,5 @@
         }
     </script>
 </body>
+
 </html>
