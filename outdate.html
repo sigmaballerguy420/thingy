@@ -10,7 +10,6 @@
             display: flex;
         }
 
-        /* Sidebar styles */
         #sidebar {
             width: 200px;
             background-color: #333;
@@ -37,20 +36,17 @@
             background-color: #575757;
         }
 
-        /* Main content container */
         #content {
             margin-left: 220px;
             padding: 20px;
             flex-grow: 1;
         }
 
-        /* Style for the desmond player */
         desmond-player {
             width: 100%;
             height: 100%;
         }
 
-        /* Controls button styles */
         #controlsButton {
             color: white;
             background-color: #444;
@@ -65,7 +61,6 @@
             background-color: #575757;
         }
 
-        /* Popup modal styles */
         #controlsPopup {
             display: none;
             position: fixed;
@@ -81,7 +76,6 @@
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
         }
 
-        /* Close button style (X button) */
         #controlsPopup .closeBtn {
             color: black;
             background-color: transparent;
@@ -97,7 +91,6 @@
             color: red;
         }
 
-        /* Controls content styling */
         #controlsPopup .popupContent {
             margin-bottom: 20px;
         }
@@ -107,7 +100,7 @@
 <body>
     <div id="sidebar">
         <div id="controlsButton" onclick="toggleControlsPopup()">Controls</div>
-        <a href="#" onclick="loadGame('game1')">Taiko</a>
+        <a href="#" onclick="loadGame('game1')">Game 1</a>
         <a href="#" onclick="loadGame('game2')">Game 2</a>
         <a href="#" onclick="loadGame('game3')">Game 3</a>
         <a href="#" onclick="loadGame('game4')">Game 4</a>
@@ -117,7 +110,6 @@
         <desmond-player></desmond-player>
     </div>
 
-    <!-- Controls Popup Modal -->
     <div id="controlsPopup">
         <button class="closeBtn" onclick="closeControlsPopup()">X</button>
         <div class="popupContent">
@@ -134,27 +126,29 @@
 
     <script src="desmond.min.js"></script>
     <script>
-        // Combine two parts into a single ZIP file and load the NDS from the combined ZIP
         function combineFilesAndLoadGame(gameFolder) {
             const part1Url = `${gameFolder}/part_aa`;
             const part2Url = `${gameFolder}/part_ab`;
 
-            // Fetch both parts
             Promise.all([fetch(part1Url), fetch(part2Url)])
-                .then(responses => Promise.all(responses.map(response => response.blob())))
-                .then(blobs => {
-                    // Combine the two blobs into one
-                    const combinedBlob = new Blob([blobs[0], blobs[1]], { type: 'application/zip' });
+                .then(responses => Promise.all(responses.map(response => response.arrayBuffer())))
+                .then(arrayBuffers => {
+                    // Combine the two ArrayBuffers into one
+                    const combinedBuffer = new ArrayBuffer(arrayBuffers[0].byteLength + arrayBuffers[1].byteLength);
+                    const combinedView = new Uint8Array(combinedBuffer);
+                    combinedView.set(new Uint8Array(arrayBuffers[0]), 0);
+                    combinedView.set(new Uint8Array(arrayBuffers[1]), arrayBuffers[0].byteLength);
 
-                    // Create a temporary anchor element for downloading the combined ZIP
-                    const tempZipFile = new Blob([combinedBlob], { type: 'application/zip' });
-                    const tempZipFileURL = URL.createObjectURL(tempZipFile);
+                    // Create a Blob with a ZIP type
+                    const combinedBlob = new Blob([combinedBuffer], { type: 'application/zip' });
 
-                    // Load the ZIP file into JSZip
-                    JSZip.loadAsync(tempZipFile).then(zip => {
+                    // Use a temporary URL to pass the Blob to JSZip
+                    const zipUrl = URL.createObjectURL(combinedBlob);
+
+                    // Load the ZIP with JSZip
+                    JSZip.loadAsync(combinedBlob).then(zip => {
                         let ndsFileFound = false;
 
-                        // Loop through the files in the ZIP
                         zip.forEach((filename, zipEntry) => {
                             if (zipEntry.name.endsWith('.nds')) {
                                 zipEntry.async('blob').then(blob => {
@@ -178,7 +172,6 @@
                 });
         }
 
-        // Load the game from the sidebar by combining the parts and playing the NDS
         function loadGame(gameFolder) {
             combineFilesAndLoadGame(gameFolder);
         }
@@ -191,7 +184,6 @@
             }, 1000);
         };
 
-        // Controls Popup functions
         function toggleControlsPopup() {
             const popup = document.getElementById('controlsPopup');
             popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
